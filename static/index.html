@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PM2.5 Air Quality Monitor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+
+        .reading {
+            font-size: 3.5rem;
+            font-weight: 300;
+            margin: 1rem 0;
+            color: #2196F3;
+        }
+
+        .unit {
+            font-size: 1.5rem;
+            color: #666;
+        }
+
+        .status {
+            margin: 1rem 0;
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .error {
+            color: #f44336;
+            margin: 1rem 0;
+        }
+
+        /* Air Quality Status Colors */
+        .good { background-color: #C8E6C9; color: #2E7D32; }
+        .moderate { background-color: #FFE0B2; color: #F57C00; }
+        .unhealthy { background-color: #FFCDD2; color: #C62828; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PM2.5 Air Quality Monitor</h1>
+        <div id="reading" class="reading">--</div>
+        <div class="unit">µg/m³</div>
+        <div id="status" class="status">Loading...</div>
+        <div id="timestamp" class="timestamp"></div>
+        <div id="error" class="error"></div>
+    </div>
+
+    <script>
+        function updateAirQualityStatus(pm25) {
+            const statusElement = document.getElementById('status');
+            if (pm25 <= 12) {
+                statusElement.textContent = 'Good';
+                statusElement.className = 'status good';
+            } else if (pm25 <= 35.4) {
+                statusElement.textContent = 'Moderate';
+                statusElement.className = 'status moderate';
+            } else {
+                statusElement.textContent = 'Unhealthy';
+                statusElement.className = 'status unhealthy';
+            }
+        }
+
+        function fetchData() {
+            fetch('/api/pm25')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('error').textContent = `Error: ${data.error}`;
+                        return;
+                    }
+                    
+                    document.getElementById('error').textContent = '';
+                    document.getElementById('reading').textContent = data.pm25;
+                    document.getElementById('timestamp').textContent = `Last updated: ${data.timestamp}`;
+                    updateAirQualityStatus(data.pm25);
+                })
+                .catch(error => {
+                    document.getElementById('error').textContent = `Connection error: ${error.message}`;
+                });
+        }
+
+        // Update data every 5 seconds
+        setInterval(fetchData, 5000);
+        // Initial fetch
+        fetchData();
+    </script>
+</body>
+</html> 
